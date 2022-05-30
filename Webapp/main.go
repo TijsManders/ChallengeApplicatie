@@ -30,7 +30,7 @@ var (
 func main() {
 	http.HandleFunc("/", RadioButtons)
 	// http.HandleFunc("/stuur", StuurNaarAPI)
-	http.HandleFunc("/api", OntvangAPI)
+	// http.HandleFunc("/api", OntvangAPI)
 	http.ListenAndServe("localhost:80", nil)
 }
 
@@ -50,13 +50,28 @@ func StuurNaarAPI(w http.ResponseWriter, r *http.Request) {
 			Tafel1JSON: Tafel1Value,
 			Tafel2JSON: Tafel2Value,
 		}
-		// body, _ := json.Marshal(TafelDataAPI)
 		payloadBuf := new(bytes.Buffer)
 		json.NewEncoder(payloadBuf).Encode(TafelDataAPI)
-		req, _ := http.NewRequest("POST", "/api", payloadBuf)
-		if req == nil {
-			fmt.Println("hallo req is nil")
+		resp, err := http.Post("http://localhost:4000/", "application/json", payloadBuf)
+		//Handle Error
+		if err != nil {
+			log.Fatalf("An Error Occured %v", err)
 		}
+		defer resp.Body.Close()
+		//Read the response body
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		sb := string(body)
+		log.Printf(sb)
+
+		// // req, _ := http.NewRequest("POST", "/api", payloadBuf)
+		// if req == nil {
+		// 	fmt.Println("hallo req is nil")
+		// }
+
+		// body, _ := json.Marshal(TafelDataAPI)
 		// req, _ := http.Post("</api>", "application/json", bytes.NewBuffer(body))
 		// if req == nil {
 		// 	fmt.Println("hallo req is nil")
@@ -73,7 +88,7 @@ func StuurNaarAPI(w http.ResponseWriter, r *http.Request) {
 		// } else {
 		// 	fmt.Println("Get failed with error: ", req.Status)
 		// }
-		fmt.Println("Sturen", payloadBuf)
+		// fmt.Println("Sturen", payloadBuf)
 
 	}
 }
