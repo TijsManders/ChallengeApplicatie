@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -16,33 +17,64 @@ type Pagina struct {
 }
 
 type TafelData struct {
-	Activatie bool `json:"Activatie"`
-	Alarm     bool `json:"Alarm"`
+	Tafel1JSON bool `json:"Tafel1Status"`
+	Tafel2JSON bool `json:"Tafel2Status"`
 }
 
 var (
 	Tafel1Value bool
 	Tafel2Value bool
+	BarTijs     []TafelData
 )
 
 func main() {
 	http.HandleFunc("/", RadioButtons)
-	http.ListenAndServe(":80", nil)
+	// http.HandleFunc("/stuur", StuurNaarAPI)
+	http.HandleFunc("/api", OntvangAPI)
+	http.ListenAndServe("localhost:80", nil)
+}
+
+func OntvangAPI(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var tData TafelData
+	json.Unmarshal(reqBody, &tData)
+	BarTijs = append(BarTijs, tData)
+	json.NewEncoder(w).Encode(tData)
+	fmt.Println(ioutil.ReadAll(r.Body))
+	fmt.Fprintf(w, "")
 }
 
 func StuurNaarAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		fmt.Println("Dit werkt ook")
-		TafelDataAPI := []TafelData{
-			{Activatie: Tafel1Value},
-			{Alarm: Tafel2Value},
+		TafelDataAPI := TafelData{
+			Tafel1JSON: Tafel1Value,
+			Tafel2JSON: Tafel2Value,
 		}
+		// body, _ := json.Marshal(TafelDataAPI)
 		payloadBuf := new(bytes.Buffer)
 		json.NewEncoder(payloadBuf).Encode(TafelDataAPI)
-		req, _ := http.NewRequest("POST", "localhost", payloadBuf)
+		req, _ := http.NewRequest("POST", "/api", payloadBuf)
 		if req == nil {
-			fmt.Println("hallo reg is nil")
+			fmt.Println("hallo req is nil")
 		}
+		// req, _ := http.Post("</api>", "application/json", bytes.NewBuffer(body))
+		// if req == nil {
+		// 	fmt.Println("hallo req is nil")
+		// }
+		// defer req.Body.Close()
+		// if req.StatusCode == http.StatusCreated {
+		// 	body, err := ioutil.ReadAll(req.Body)
+		// 	if err != nil {
+		// 		panic(err)
+		// 	}
+		// 	jsonStr := string(body)
+		// 	fmt.Println("Response: ", jsonStr)
+
+		// } else {
+		// 	fmt.Println("Get failed with error: ", req.Status)
+		// }
+		fmt.Println("Sturen", payloadBuf)
+
 	}
 }
 
@@ -54,19 +86,17 @@ func RadioButtons(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 
-		Tafel1V, err := strconv.ParseBool(r.Form.Get("ActivatieStatus"))
+		Tafel1V, err := strconv.ParseBool(r.Form.Get("Tafel1I"))
 		if err != nil {
 			log.Fatal(err)
 		}
 		Tafel1Value = Tafel1V
-		fmt.Println(Tafel1Value, "Tijs")
 
-		Tafel2V, err := strconv.ParseBool(r.Form.Get("AlarmStatus"))
+		Tafel2V, err := strconv.ParseBool(r.Form.Get("Tafel2I"))
 		if err != nil {
 			log.Fatal(err)
 		}
 		Tafel2Value = Tafel2V
-		fmt.Println(Tafel2Value, "Niet Tijs")
 	}
 	data := Pagina{
 		Tafel1: Tafel1Value,
