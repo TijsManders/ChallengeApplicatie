@@ -39,6 +39,7 @@ func StuurAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 func OntvangAPI(w http.ResponseWriter, r *http.Request) {
+	// eerst naar database voor decoden
 	if r.Method == http.MethodPost {
 		reqBody, _ := ioutil.ReadAll(r.Body)
 		json.Unmarshal(reqBody, &tData)
