@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -24,27 +25,33 @@ type TafelData struct {
 var (
 	Tafel1Value bool
 	Tafel2Value bool
-	BarTijs     []TafelData
+	data        Pagina
 )
 
 func main() {
 	http.HandleFunc("/", RadioButtons)
-	// http.HandleFunc("/stuur", StuurNaarAPI)
-	// http.HandleFunc("/api", OntvangAPI)
 	http.ListenAndServe("localhost:80", nil)
 }
 
-func OntvangAPI(w http.ResponseWriter, r *http.Request) {
-	reqBody, _ := ioutil.ReadAll(r.Body)
-	var tData TafelData
-	json.Unmarshal(reqBody, &tData)
-	BarTijs = append(BarTijs, tData)
-	json.NewEncoder(w).Encode(tData)
-	fmt.Println(ioutil.ReadAll(r.Body))
-	fmt.Fprintf(w, "")
+func VraagAPI(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		response, err := http.Get("http://localhost:4000/get")
+		if err != nil {
+			fmt.Print(err.Error())
+			os.Exit(1)
+		}
+		responseData, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		json.Unmarshal(responseData, &data)
+		json.NewEncoder(w).Encode(data)
+		fmt.Fprintf(w, "")
+		fmt.Println(data.Tafel1, data.Tafel2)
+	}
 }
 
-func StuurNaarAPI(w http.ResponseWriter, r *http.Request) {
+func StuurAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		TafelDataAPI := TafelData{
 			Tafel1JSON: Tafel1Value,
@@ -53,43 +60,17 @@ func StuurNaarAPI(w http.ResponseWriter, r *http.Request) {
 		payloadBuf := new(bytes.Buffer)
 		json.NewEncoder(payloadBuf).Encode(TafelDataAPI)
 		resp, err := http.Post("http://localhost:4000/", "application/json", payloadBuf)
-		//Handle Error
 		if err != nil {
 			log.Fatalf("An Error Occured %v", err)
 		}
 		defer resp.Body.Close()
-		//Read the response body
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		sb := string(body)
-		log.Printf(sb)
-
-		// // req, _ := http.NewRequest("POST", "/api", payloadBuf)
-		// if req == nil {
-		// 	fmt.Println("hallo req is nil")
+		// Hiermee kan de data die verstuurd wordt gelezen worden
+		// body, err := ioutil.ReadAll(resp.Body)
+		// if err != nil {
+		// 	log.Fatalln(err)
 		// }
-
-		// body, _ := json.Marshal(TafelDataAPI)
-		// req, _ := http.Post("</api>", "application/json", bytes.NewBuffer(body))
-		// if req == nil {
-		// 	fmt.Println("hallo req is nil")
-		// }
-		// defer req.Body.Close()
-		// if req.StatusCode == http.StatusCreated {
-		// 	body, err := ioutil.ReadAll(req.Body)
-		// 	if err != nil {
-		// 		panic(err)
-		// 	}
-		// 	jsonStr := string(body)
-		// 	fmt.Println("Response: ", jsonStr)
-
-		// } else {
-		// 	fmt.Println("Get failed with error: ", req.Status)
-		// }
-		// fmt.Println("Sturen", payloadBuf)
-
+		// sb := string(body)
+		// log.Printf(sb)
 	}
 }
 
@@ -113,10 +94,12 @@ func RadioButtons(w http.ResponseWriter, r *http.Request) {
 		}
 		Tafel2Value = Tafel2V
 	}
-	data := Pagina{
+	data = Pagina{
 		Tafel1: Tafel1Value,
 		Tafel2: Tafel2Value,
 	}
+	StuurAPI(w, r)
+	VraagAPI(w, r)
 	tmpl.Execute(w, data)
-	StuurNaarAPI(w, r)
+
 }
