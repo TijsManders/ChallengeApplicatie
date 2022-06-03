@@ -2,14 +2,10 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	// "firebase.google.com/go"
-	"google.golang.org/api/option"
 )
 
 type TafelData struct {
@@ -29,17 +25,7 @@ func main() {
 
 func StuurAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		sa := option.WithCredentialsFile("ServiceAccountKey.json")
-		app, err := firebase.NewApp(context.Background(), nil, sa)
-		if err != nil {
-			fmt.Println(err)
-		}
-		client, err := app.Firestore(context.Background())
-		if err != nil {
-			fmt.Println(err)
-		}
-		response, err := client.Collection("TafelData").Doc("Tafel1Status").Get(context.Background())
-		// response, err := http.Get("https://challenge-cf3aa-default-rtdb.europe-west1.firebasedatabase.app/")
+		response, err := http.Get("https://challenge-cf3aa-default-rtdb.europe-west1.firebasedatabase.app/")
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -51,8 +37,6 @@ func StuurAPI(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(tData)
 		fmt.Fprintf(w, "")
 		fmt.Println(tData.Tafel1JSON, tData.Tafel2JSON)
-		defer client.Close()
-
 	}
 }
 
