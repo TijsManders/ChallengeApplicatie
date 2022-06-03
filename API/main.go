@@ -19,14 +19,27 @@ var (
 )
 
 func main() {
+	// sa := option.WithCredentialsFile("ServiceAccountKey.json")
+	// app, err := firebase.NewApp(context.Background(), nil, sa)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// client, err := app.Firestore(context.Background())
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
 	http.HandleFunc("/", OntvangAPI)
 	http.HandleFunc("/get", StuurAPI)
 	http.ListenAndServe("localhost:4000", nil)
+	// defer client.Close()
 }
 
 func StuurAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		response, err := http.Get("https://challenge-cf3aa-default-rtdb.europe-west1.firebasedatabase.app/")
+		if err != nil {
+			log.Fatal(err)
+		}
 		responseData, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			log.Fatal(err)
@@ -57,12 +70,12 @@ func OntvangAPI(w http.ResponseWriter, r *http.Request) {
 			log.Fatalf("An Error Occured %v", err)
 		}
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		sb := string(body)
-		log.Printf(sb)
+		// body, err := ioutil.ReadAll(resp.Body)
+		// if err != nil {
+		// 	log.Fatalln(err)
+		// }
+		// sb := string(body)
+		// log.Printf(sb)
 
 	}
 }
