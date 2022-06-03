@@ -2,10 +2,10 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -19,30 +19,30 @@ var (
 )
 
 func main() {
-	// sa := option.WithCredentialsFile("ServiceAccountKey.json")
-	// app, err := firebase.NewApp(context.Background(), nil, sa)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// client, err := app.Firestore(context.Background())
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
+	sa := option.WithCredentialsFile("ServiceAccountKey.json")
+	app, err := firebase.NewApp(context.Background(), nil, sa)
+	if err != nil {
+		fmt.Println(err)
+	}
+	client, err := app.Firestore(context.Background())
+	if err != nil {
+		fmt.Println(err)
+	}
 	http.HandleFunc("/", OntvangAPI)
 	http.HandleFunc("/get", StuurAPI)
 	http.ListenAndServe("localhost:4000", nil)
-	// defer client.Close()
+	defer client.Close()
 }
 
 func StuurAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		response, err := http.Get("https://challenge-cf3aa-default-rtdb.europe-west1.firebasedatabase.app/")
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		responseData, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		json.Unmarshal(responseData, &tData)
 		json.NewEncoder(w).Encode(tData)
@@ -67,7 +67,7 @@ func OntvangAPI(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(payloadBuf).Encode(TafelDataAPI)
 		resp, err := http.Post("https://challenge-cf3aa-default-rtdb.europe-west1.firebasedatabase.app/.json", "application/json", payloadBuf)
 		if err != nil {
-			log.Fatalf("An Error Occured %v", err)
+			fmt.Println(err)
 		}
 		defer resp.Body.Close()
 		// body, err := ioutil.ReadAll(resp.Body)
