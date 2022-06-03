@@ -36,7 +36,9 @@ func StuurAPI(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(responseData, &tData)
 		json.NewEncoder(w).Encode(tData)
 		fmt.Fprintf(w, "")
+		fmt.Println("Dit is de data die de API uit de database haalt.")
 		fmt.Println(tData.Tafel1JSON, tData.Tafel2JSON)
+
 	}
 }
 
@@ -65,6 +67,8 @@ func OntvangAPI(w http.ResponseWriter, r *http.Request) {
 		// }
 		// sb := string(body)
 		// log.Printf(sb)
+		fmt.Println("Dit is de data die de API naar de database verstuurd")
+		fmt.Println(tData.Tafel1JSON, tData.Tafel2JSON)
 
 	}
 }
